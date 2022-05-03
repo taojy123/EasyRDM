@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>EasyRDM</title>
+    <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+    <script src="//unpkg.com/vue@next"></script>
+    <script src="//unpkg.com/element-plus"></script>
+    <script src="//unpkg.com/@element-plus/icons-vue"></script>
+    <script src="//unpkg.com/axios"></script>
+</head>
+<body>
+
+    <div id="app">
+
+      <div class="common-layout">
+        <el-container>
+          <el-header>
+            <el-row>
+                <el-col :span="6"><img src="http://qiniu.athenagu.com/docs/logo.png" height="40"></el-col>
+                <el-col :span="18">
+
+                  <el-button @click="addServer" type="primary" circle style="float: right; margin-left: 5px">
+                    <el-icon><plus /></el-icon>
+                  </el-button>
+
+                  <el-button @click="deleteServer" type="danger" circle style="float: right; margin-left: 5px">
+                    <el-icon><delete /></el-icon>
+                  </el-button>
+
+                  <el-button @click="fetchDbs" circle style="float: right; margin-left: 5px">
+                    <el-icon><refresh-right /></el-icon>
+                  </el-button>
+
+                  <el-select v-model="currentServer" style="float: right" @change="fetchDbs">
+                    <el-option
+                      v-for="(s,name,i) in servers"
+                      :key="i"
+                      :value="name"
+                      :label="name + ' - ' + s.host"
+                    />
+                  </el-select>
+
+                </el-col>
+            </el-row>
+
+            <el-divider style="margin: 0" />
+
+          </el-header>
+          <el-container>
+            <el-aside width="500px">
+
+                <el-form :inline="true" :model="searchForm" class="demo-form-inline">
+                  <el-form-item label="" style="width: 120px; margin-right: 10px;">
+                    <el-select v-model="searchForm.db">
+                      <el-option
+                        v-for="db in dbs"
+                        :key="db.id"
+                        :value="db.id"
+                        :label="db.title"
+                      />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="" style="width: 280px; margin-right: 10px;">
+                    <el-input v-model="searchForm.search" placeholder="Search Keys" />
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button type="primary" @click="searchKeys">
+                      <el-icon><search /></el-icon>
+                    </el-button>
+                  </el-form-item>
+                </el-form>
+
+                <el-tree-v2 :data="result_keys" :highlight-current="true" :height="treeHeight" />
+
+            </el-aside>
+            <el-main>
+                Main
+                <el-button>{{'{{'}} message {{'}}'}}</el-button>
+            </el-main>
+          </el-container>
+        </el-container>
+      </div>
+
+      <el-dialog v-model="serverFormVisible" :draggable="true" title="Add New Redis Server">
+        <el-form :model="serverForm" label-width="150px" >
+          <el-form-item label="Name">
+            <el-input v-model="serverForm.name" />
+          </el-form-item>
+          <el-form-item label="Host">
+            <el-input v-model="serverForm.host" />
+          </el-form-item>
+          <el-form-item label="Port">
+            <el-input v-model="serverForm.port" />
+          </el-form-item>
+          <el-form-item label="Password">
+            <el-input v-model="serverForm.password" type="password" />
+          </el-form-item>
+          <el-form-item label="By SSH Tunnel">
+            <el-switch v-model="serverForm.by_ssh" />
+          </el-form-item>
+          <el-form-item label="SSH Host" v-if="serverForm.by_ssh" >
+            <el-input v-model="serverForm.ssh_host" />
+          </el-form-item>
+          <el-form-item label="SSH Port" v-if="serverForm.by_ssh" >
+            <el-input v-model="serverForm.ssh_port" />
+          </el-form-item>
+          <el-form-item label="SSH User" v-if="serverForm.by_ssh" >
+            <el-input v-model="serverForm.ssh_user" />
+          </el-form-item>
+          <el-form-item label="SSH Password" v-if="serverForm.by_ssh" >
+            <el-input v-model="serverForm.ssh_password" type="password" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button type="warning" @click="testServer">Test Connection</el-button>
+            <el-button type="primary" @click="saveServer">Save Server</el-button>
+          </span>
+        </template>
+      </el-dialog>
+
+    </div>
+
+
+    <script>
+      const App = {
+        data() {
+          return {
+              message: "Hello Element Plus",
+              serverFormVisible: false,
+              serverForm: {
+                  name: '',
+                  host: '',
+                  port: '6379',
+                  password: '',
+                  by_ssh: false,
+                  ssh_host: '',
+                  ssh_port: '',
+                  ssh_user: '',
+                  ssh_password: '',
+              },
+              dbs: [
+                  {id: 0, title: 'db0 (0)'},
+                  {id: 1, title: 'db1 (0)'},
+              ],
+              currentServer: 'default',
+              searchForm: {
+                  db: 0,
+                  search: '',
+              },
+              result_keys: [],
+          };
+        },
+
+        mounted() {
+          this.fetchDbs()
+        },
+
+        computed: {
+            treeHeight() {
+                return document.documentElement.clientHeight - 130
+            },
+            servers() {
+              if (!localStorage.getItem('servers')) {
+                  const servers = {
+                      'default': {
+                          host: '127.0.0.1',
+                          port: '6379',
+                          password: '',
+                          by_ssh: false,
+                          ssh_host: '',
+                          ssh_port: '',
+                          ssh_user: '',
+                          ssh_password: '',
+                      },
+                  }
+                  localStorage.setItem('servers', JSON.stringify(servers))
+              }
+              return JSON.parse(localStorage.getItem('servers'))
+            }
+        },
+
+        methods: {
+            handleNodeClick(a, b, c) {
+              console.log(a)
+              console.log(b)
+              console.log(c)
+            },
+            searchKeys() {
+              this.result_keys = []
+              const loading = ElementPlus.ElLoading.service({
+                lock: true,
+                text: 'Loading',
+                background: 'rgba(0, 0, 0, 0.7)',
+              })
+              const url = `/search_keys`
+              const name = this.currentServer
+              const params = {
+                  host: this.servers[name].host,
+                  port: this.servers[name].port,
+                  password: this.servers[name].password,
+                  by_ssh: this.servers[name].by_ssh,
+                  ssh_host: this.servers[name].ssh_host,
+                  ssh_port: this.servers[name].ssh_port,
+                  ssh_user: this.servers[name].ssh_user,
+                  ssh_password: this.servers[name].ssh_password,
+                  db: this.searchForm.db,
+                  search: this.searchForm.search,
+              }
+              axios.get(url, {params: params}).then((response) => {
+                loading.close()
+                if (response.data.error) {
+                    ElementPlus.ElMessage.error(response.data.error)
+                } else {
+                    this.result_keys = response.data.result_keys
+                }
+              }).catch((err) => {
+                ElNotification({title: 'Error', message: err, type: 'error'})
+                loading.close()
+              })
+            },
+            deleteServer() {
+                const name = this.currentServer
+                if (name === 'default') {
+                    ElementPlus.ElMessage.error(`default server can not be deleted!`)
+                    return
+                }
+                ElementPlus.ElMessageBox.confirm(
+                    `Are you sure to delete the server(${name}) ?`,
+                    'Warning',
+                    {
+                      confirmButtonText: 'OK',
+                      cancelButtonText: 'Cancel',
+                      type: 'warning',
+                    }
+                ).then(() => {
+                    this.currentServer = 'default'
+                    const servers = this.servers
+                    delete servers[name]
+                    localStorage.setItem('servers', JSON.stringify(servers))
+                    ElementPlus.ElMessage.success(`${name} server has been deleted!`)
+                })
+            },
+            addServer() {
+                this.serverForm = {
+                  name: '',
+                  host: '',
+                  port: '6379',
+                  password: '',
+                  by_ssh: false,
+                  ssh_host: '',
+                  ssh_port: '',
+                  ssh_user: '',
+                  ssh_password: '',
+                }
+                this.serverFormVisible = true
+            },
+            saveServer() {
+                const name = this.serverForm.name
+                if (!name) {
+                    ElementPlus.ElMessage.error('Miss server name!')
+                    return
+                }
+                if (name in this.servers) {
+                    ElementPlus.ElMessage.error('Repeat server name!')
+                    return
+                }
+                if (!this.serverForm.host) {
+                    ElementPlus.ElMessage.error('Miss server host!')
+                    return
+                }
+                if (!this.serverForm.port) {
+                    ElementPlus.ElMessage.error('Miss server port!')
+                    return
+                }
+                const servers = this.servers
+                servers[name] = {
+                    host: this.serverForm.host,
+                    port: this.serverForm.port,
+                    password: this.serverForm.password,
+                    by_ssh: this.serverForm.by_ssh,
+                    ssh_host: this.serverForm.ssh_host,
+                    ssh_port: this.serverForm.ssh_port,
+                    ssh_user: this.serverForm.ssh_user,
+                    ssh_password: this.serverForm.ssh_password,
+                }
+                localStorage.setItem('servers', JSON.stringify(servers))
+                this.serverFormVisible = false
+                ElementPlus.ElMessage.success(`Add server ${name} successful`)
+            },
+            testServer() {
+                const url = '/test_connection'
+                const params = {
+                    host: this.serverForm.host,
+                    port: this.serverForm.port,
+                    password: this.serverForm.password,
+                    by_ssh: this.serverForm.by_ssh,
+                    ssh_host: this.serverForm.ssh_host,
+                    ssh_port: this.serverForm.ssh_port,
+                    ssh_user: this.serverForm.ssh_user,
+                    ssh_password: this.serverForm.ssh_password,
+                }
+                const loading = ElementPlus.ElLoading.service({
+                  lock: true,
+                  text: 'Loading',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                })
+                axios.get(url, {params: params}).then((response) => {
+                  loading.close()
+                  if (response.data.success) {
+                      ElementPlus.ElMessage.success('connection success!')
+                  } else {
+                      ElementPlus.ElMessage.error(`connection fail: ${response.data.error}`)
+                  }
+                }).catch((err) => {
+                  ElNotification({title: 'Error', message: err, type: 'error'})
+                  loading.close()
+                })
+            },
+            fetchDbs() {
+                const url = '/get_dbs'
+                const name = this.currentServer
+                const params = {
+                    host: this.servers[name].host,
+                    port: this.servers[name].port,
+                    password: this.servers[name].password,
+                    by_ssh: this.servers[name].by_ssh,
+                    ssh_host: this.servers[name].ssh_host,
+                    ssh_port: this.servers[name].ssh_port,
+                    ssh_user: this.servers[name].ssh_user,
+                    ssh_password: this.servers[name].ssh_password,
+                }
+                const loading = ElementPlus.ElLoading.service({
+                  lock: true,
+                  text: 'Loading',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                })
+                axios.get(url, {params: params}).then((response) => {
+                  loading.close()
+                  this.dbs = response.data.dbs
+                  this.searchForm.db = 0
+                  this.searchForm.search = ''
+                  this.result_keys = []
+                }).catch((err) => {
+                  ElNotification({title: 'Error', message: err, type: 'error'})
+                  loading.close()
+                })
+
+            },
+
+        },
+
+      };
+      const app = Vue.createApp(App);
+      app.use(ElementPlus);
+      for ([key, component] of Object.entries(ElementPlusIconsVue)) {
+        app.component(key, component)
+      }
+      vm = app.mount("#app");
+
+
+    </script>
+
+</body>
+</html>

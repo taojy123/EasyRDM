@@ -1,0 +1,7 @@
+# Python3
+
+# bottle
+# nanorm
+
+redis>=3.5.3
+
