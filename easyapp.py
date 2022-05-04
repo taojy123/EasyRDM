@@ -207,7 +207,7 @@ def get_key_detail():
     return data
 
 
-run(host='localhost', port=8080, reloader=True, debug=True)
+run(host='0.0.0.0', port=8080, reloader=True, debug=True)
 
 
 # docker run -it --rm -p 6379:6379 redis
