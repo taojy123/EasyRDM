@@ -1,5 +1,5 @@
 # EasyRDM
-The Simple web GUI for redis, inspired by RDM(resp).
+The simple web GUI for redis, inspired by RDM(resp).
 
 <img width="1000" src="https://user-images.githubusercontent.com/3334897/166682161-02bca328-e346-4608-8255-f8227fe9597b.png">
 
