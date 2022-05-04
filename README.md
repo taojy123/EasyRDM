@@ -43,8 +43,10 @@ Direct open brower and visit `https://easyrdm.tslow.cn`
 
 1. Add your redis server
 <img width="780" src="https://user-images.githubusercontent.com/3334897/166685223-43a2bdd0-045f-452f-9dde-edbe9900c6df.png">
+
 2. Select a db
 <img width="780" src="https://user-images.githubusercontent.com/3334897/166685291-81cc5b21-1ca2-4d10-b05c-2d3df901089b.png">
+
 3. Search keys
 
 4. Click on the key point in the tree you are interested
