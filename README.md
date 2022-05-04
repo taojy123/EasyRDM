@@ -1,7 +1,11 @@
 # EasyRDM
 The Simple web GUI for redis, inspired by RDM(resp).
 
-<img alt="example" src="https://user-images.githubusercontent.com/3334897/166682161-02bca328-e346-4608-8255-f8227fe9597b.png">
+<img width="1000" src="https://user-images.githubusercontent.com/3334897/166682161-02bca328-e346-4608-8255-f8227fe9597b.png">
+
+online website demo:
+https://easyrdm.tslow.cn
+
 
 # Install
 
@@ -38,19 +42,15 @@ Direct open brower and visit `https://easyrdm.tslow.cn`
 # Quick start
 
 1. Add your redis server
-<img src="https://user-images.githubusercontent.com/3334897/166683729-cbc59c2e-274f-4aee-8cd4-74a69112965b.png">
-
+<img width="780" src="https://user-images.githubusercontent.com/3334897/166685223-43a2bdd0-045f-452f-9dde-edbe9900c6df.png">
 2. Select a db
-<img alt="image" src="https://user-images.githubusercontent.com/3334897/166684154-94fdeb0f-935c-4ead-a18f-d450eaa28534.png">
-
+<img width="780" src="https://user-images.githubusercontent.com/3334897/166685291-81cc5b21-1ca2-4d10-b05c-2d3df901089b.png">
 3. Search keys
 
 4. Click on the key point in the tree you are interested
 
 5. View the detail info of the key
-<img width="1051" alt="image" src="https://user-images.githubusercontent.com/3334897/166684764-f375065a-f788-4de5-8aa0-3c59c62d8ac7.png">
-
-
+<img width="780" src="https://user-images.githubusercontent.com/3334897/166685338-72f9f097-205c-4c2d-97cc-216e6147e071.png">
 
 
 
