@@ -11,7 +11,7 @@ https://easyrdm.tslow.cn
 
 there ara three ways to install and run `EasyRDM`:
 
-## By source code
+### By source code
 
 Require python3.7+ installed
 ```bash
@@ -22,7 +22,7 @@ python easyapp
 Then, open brower and visit `http://127.0.0.1:8080`
 
 
-## By docker image
+### By docker image
 
 Require docker installed
 ```bash
@@ -31,7 +31,7 @@ docker run --name easyrdm -p 8080:8080 -d --rm registry.cn-shanghai.aliyuncs.com
 Then, open brower and visit `http://127.0.0.1:8080`
 
 
-## Use online public website
+### Use online public website
 
 Direct open brower and visit `https://easyrdm.tslow.cn`
 
