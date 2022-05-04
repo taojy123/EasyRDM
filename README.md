@@ -70,5 +70,6 @@ Direct open brower and visit `https://easyrdm.tslow.cn`
 - view value of string key by json format
 - view value of list/hash/set/zset key by a single textarea
 - connect by ssh tunnel
+- local connect 
 
 
