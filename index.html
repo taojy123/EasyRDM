@@ -15,7 +15,7 @@
 
       <div class="common-layout">
         <el-container>
-          <el-header>
+          <el-header style="padding-top: 6px">
             <el-row>
                 <el-col :span="6"><img src="http://qiniu.athenagu.com/docs/logo.png" height="40"></el-col>
                 <el-col :span="18">
@@ -44,40 +44,124 @@
                 </el-col>
             </el-row>
 
-            <el-divider style="margin: 0" />
+            <el-divider style="margin: 6px 0;" />
 
           </el-header>
           <el-container>
             <el-aside width="500px">
 
-                <el-form :inline="true" :model="searchForm" class="demo-form-inline">
-                  <el-form-item label="" style="width: 120px; margin-right: 10px;">
-                    <el-select v-model="searchForm.db">
-                      <el-option
-                        v-for="db in dbs"
-                        :key="db.id"
-                        :value="db.id"
-                        :label="db.title"
-                      />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="" style="width: 280px; margin-right: 10px;">
-                    <el-input v-model="searchForm.search" placeholder="Search Keys" />
-                  </el-form-item>
-                  <el-form-item>
-                    <el-button type="primary" @click="searchKeys">
-                      <el-icon><search /></el-icon>
-                    </el-button>
-                  </el-form-item>
-                </el-form>
+                <div style="margin-top: 22px;">
+                  <el-form :inline="true" :model="searchForm" class="demo-form-inline">
+                    <el-form-item label="" style="width: 120px; margin-right: 10px;">
+                      <el-select v-model="searchForm.db" @change="searchKeys">
+                        <el-option
+                          v-for="db in dbs"
+                          :key="db.id"
+                          :value="db.id"
+                          :label="db.title"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item label="" style="width: 310px; margin-right: 10px;">
+                      <el-input v-model="searchForm.search" placeholder="Search Keys" />
+                    </el-form-item>
+                    <el-form-item style="margin-right: 0">
+                      <el-button type="primary" @click="searchKeys">
+                        <el-icon><search /></el-icon>
+                      </el-button>
+                    </el-form-item>
+                  </el-form>
+                </div>
 
-                <el-tree-v2 :data="result_keys" :highlight-current="true" :height="treeHeight" />
+
+                <el-tree-v2
+                  :data="resultKeys"
+                  :highlight-current="true"
+                  :height="treeHeight"
+                  @node-click="handleNodeClick"
+                ></el-tree-v2>
+
+                <div style="position: fixed; bottom: 10px">
+                  <el-button @click="fetchKeyData" type="primary" plain round size="small">
+                    + string
+                  </el-button>
+                  <el-button @click="fetchKeyData" type="success" plain round size="small">
+                    + list
+                  </el-button>
+                  <el-button @click="fetchKeyData" type="danger" plain round size="small">
+                    + hash
+                  </el-button>
+                  <el-button @click="fetchKeyData" type="warning" plain round size="small">
+                    + set
+                  </el-button>
+                  <el-button @click="fetchKeyData" type="info" plain round size="small">
+                    + zset
+                  </el-button>
+                </div>
 
             </el-aside>
+
             <el-main>
-                Main
-                <el-button>{{'{{'}} message {{'}}'}}</el-button>
+
+                <el-card class="box-card">
+                  <template #header>
+                    <div class="card-header">
+
+                      <span>{{ currentKey }} &nbsp;</span>
+
+                      <el-tag v-if="currentKeyType">{{ currentKeyType  }}</el-tag>
+
+                      <el-button @click="fetchKeyData" type="danger" plain size="small" circle style="float: right; margin-left: 5px">
+                        <el-icon><delete /></el-icon>
+                      </el-button>
+<!--                      <el-button @click="fetchKeyData" type="primary" plain size="small" circle style="float: right; margin-left: 5px">-->
+<!--                        <el-icon><folder-checked /></el-icon>-->
+<!--                      </el-button>-->
+<!--                      <el-button @click="fetchKeyData" plain size="small" circle style="float: right; margin-left: 5px">-->
+<!--                        <el-icon><edit /></el-icon>-->
+<!--                      </el-button>-->
+                      <el-button @click="fetchKeyData" plain size="small" circle style="float: right; margin-left: 5px">
+                        <el-icon><refresh /></el-icon>
+                      </el-button>
+
+                    </div>
+                  </template>
+
+                  <div v-if="currentKeyType === 'string'">
+                    <el-input type="textarea" v-model="currentStringData" autosize />
+                  </div>
+
+                  <div v-if="currentKeyType === 'list'">
+                    <el-table :data="currentListData" border stripe style="width: 100%">
+                      <el-table-column prop="index" label="Index" width="100"></el-table-column>
+                      <el-table-column prop="value" label="Value"></el-table-column>
+                    </el-table>
+                  </div>
+
+                  <div v-if="currentKeyType === 'hash'">
+                    <el-table :data="currentHashData" border stripe style="width: 100%">
+                      <el-table-column prop="key" label="Key"></el-table-column>
+                      <el-table-column prop="value" label="Value"></el-table-column>
+                    </el-table>
+                  </div>
+
+                  <div v-if="currentKeyType === 'set'">
+                    <el-table :data="currentSetData" border stripe style="width: 100%">
+                      <el-table-column prop="value" label="Value"></el-table-column>
+                    </el-table>
+                  </div>
+
+                  <div v-if="currentKeyType === 'zset'">
+                    <el-table :data="currentZsetData" border stripe style="width: 100%">
+                      <el-table-column prop="score" label="Score"></el-table-column>
+                      <el-table-column prop="value" label="Value"></el-table-column>
+                    </el-table>
+                  </div>
+
+                </el-card>
+
             </el-main>
+
           </el-container>
         </el-container>
       </div>
@@ -114,7 +198,7 @@
         </el-form>
         <template #footer>
           <span class="dialog-footer">
-            <el-button type="warning" @click="testServer">Test Connection</el-button>
+            <el-button type="warning" @click="testConnection">Test Connection</el-button>
             <el-button type="primary" @click="saveServer">Save Server</el-button>
           </span>
         </template>
@@ -127,7 +211,7 @@
       const App = {
         data() {
           return {
-              message: "Hello Element Plus",
+              // top servers
               serverFormVisible: false,
               serverForm: {
                   name: '',
@@ -140,16 +224,27 @@
                   ssh_user: '',
                   ssh_password: '',
               },
+              currentServer: 'default',
+              // right search
               dbs: [
                   {id: 0, title: 'db0 (0)'},
                   {id: 1, title: 'db1 (0)'},
               ],
-              currentServer: 'default',
               searchForm: {
                   db: 0,
                   search: '',
               },
-              result_keys: [],
+              resultKeys: [],
+              totalKeys: [],
+              // left detail
+              currentKey: '',
+              currentKeyType: '',
+              currentKeyTtl: '',
+              currentStringData: '',
+              currentListData: [],
+              currentHashData: [],
+              currentSetData: [],
+              currentZsetData: [],
           };
         },
 
@@ -182,66 +277,6 @@
         },
 
         methods: {
-            handleNodeClick(a, b, c) {
-              console.log(a)
-              console.log(b)
-              console.log(c)
-            },
-            searchKeys() {
-              this.result_keys = []
-              const loading = ElementPlus.ElLoading.service({
-                lock: true,
-                text: 'Loading',
-                background: 'rgba(0, 0, 0, 0.7)',
-              })
-              const url = `/search_keys`
-              const name = this.currentServer
-              const params = {
-                  host: this.servers[name].host,
-                  port: this.servers[name].port,
-                  password: this.servers[name].password,
-                  by_ssh: this.servers[name].by_ssh,
-                  ssh_host: this.servers[name].ssh_host,
-                  ssh_port: this.servers[name].ssh_port,
-                  ssh_user: this.servers[name].ssh_user,
-                  ssh_password: this.servers[name].ssh_password,
-                  db: this.searchForm.db,
-                  search: this.searchForm.search,
-              }
-              axios.get(url, {params: params}).then((response) => {
-                loading.close()
-                if (response.data.error) {
-                    ElementPlus.ElMessage.error(response.data.error)
-                } else {
-                    this.result_keys = response.data.result_keys
-                }
-              }).catch((err) => {
-                ElNotification({title: 'Error', message: err, type: 'error'})
-                loading.close()
-              })
-            },
-            deleteServer() {
-                const name = this.currentServer
-                if (name === 'default') {
-                    ElementPlus.ElMessage.error(`default server can not be deleted!`)
-                    return
-                }
-                ElementPlus.ElMessageBox.confirm(
-                    `Are you sure to delete the server(${name}) ?`,
-                    'Warning',
-                    {
-                      confirmButtonText: 'OK',
-                      cancelButtonText: 'Cancel',
-                      type: 'warning',
-                    }
-                ).then(() => {
-                    this.currentServer = 'default'
-                    const servers = this.servers
-                    delete servers[name]
-                    localStorage.setItem('servers', JSON.stringify(servers))
-                    ElementPlus.ElMessage.success(`${name} server has been deleted!`)
-                })
-            },
             addServer() {
                 this.serverForm = {
                   name: '',
@@ -255,6 +290,35 @@
                   ssh_password: '',
                 }
                 this.serverFormVisible = true
+            },
+            testConnection() {
+                const url = '/test_connection'
+                const params = {
+                    host: this.serverForm.host,
+                    port: this.serverForm.port,
+                    password: this.serverForm.password,
+                    by_ssh: this.serverForm.by_ssh,
+                    ssh_host: this.serverForm.ssh_host,
+                    ssh_port: this.serverForm.ssh_port,
+                    ssh_user: this.serverForm.ssh_user,
+                    ssh_password: this.serverForm.ssh_password,
+                }
+                const loading = ElementPlus.ElLoading.service({
+                  lock: true,
+                  text: 'Loading',
+                  background: 'rgba(0, 0, 0, 0.7)',
+                })
+                axios.get(url, {params: params}).then((response) => {
+                  loading.close()
+                  if (response.data.success) {
+                      ElementPlus.ElMessage.success('connection success!')
+                  } else {
+                      ElementPlus.ElMessage.error(`connection fail: ${response.data.error}`)
+                  }
+                }).catch((err) => {
+                  ElNotification({title: 'Error', message: err, type: 'error'})
+                  loading.close()
+                })
             },
             saveServer() {
                 const name = this.serverForm.name
@@ -289,33 +353,26 @@
                 this.serverFormVisible = false
                 ElementPlus.ElMessage.success(`Add server ${name} successful`)
             },
-            testServer() {
-                const url = '/test_connection'
-                const params = {
-                    host: this.serverForm.host,
-                    port: this.serverForm.port,
-                    password: this.serverForm.password,
-                    by_ssh: this.serverForm.by_ssh,
-                    ssh_host: this.serverForm.ssh_host,
-                    ssh_port: this.serverForm.ssh_port,
-                    ssh_user: this.serverForm.ssh_user,
-                    ssh_password: this.serverForm.ssh_password,
+            deleteServer() {
+                const name = this.currentServer
+                if (name === 'default') {
+                    ElementPlus.ElMessage.error(`default server can not be deleted!`)
+                    return
                 }
-                const loading = ElementPlus.ElLoading.service({
-                  lock: true,
-                  text: 'Loading',
-                  background: 'rgba(0, 0, 0, 0.7)',
-                })
-                axios.get(url, {params: params}).then((response) => {
-                  loading.close()
-                  if (response.data.success) {
-                      ElementPlus.ElMessage.success('connection success!')
-                  } else {
-                      ElementPlus.ElMessage.error(`connection fail: ${response.data.error}`)
-                  }
-                }).catch((err) => {
-                  ElNotification({title: 'Error', message: err, type: 'error'})
-                  loading.close()
+                ElementPlus.ElMessageBox.confirm(
+                    `Are you sure to delete the server(${name}) ?`,
+                    'Warning',
+                    {
+                      confirmButtonText: 'OK',
+                      cancelButtonText: 'Cancel',
+                      type: 'warning',
+                    }
+                ).then(() => {
+                    this.currentServer = 'default'
+                    const servers = this.servers
+                    delete servers[name]
+                    localStorage.setItem('servers', JSON.stringify(servers))
+                    ElementPlus.ElMessage.success(`${name} server has been deleted!`)
                 })
             },
             fetchDbs() {
@@ -341,13 +398,119 @@
                   this.dbs = response.data.dbs
                   this.searchForm.db = 0
                   this.searchForm.search = ''
-                  this.result_keys = []
+                  this.resultKeys = []
+                  this.clearCurrentKeyDetail(true)
                 }).catch((err) => {
                   ElNotification({title: 'Error', message: err, type: 'error'})
                   loading.close()
                 })
 
             },
+            searchKeys() {
+              this.clearCurrentKeyDetail()
+              this.resultKeys = []
+              const loading = ElementPlus.ElLoading.service({
+                lock: true,
+                text: 'Loading',
+                background: 'rgba(0, 0, 0, 0.7)',
+              })
+              const url = `/search_keys`
+              const name = this.currentServer
+              const params = {
+                  host: this.servers[name].host,
+                  port: this.servers[name].port,
+                  password: this.servers[name].password,
+                  by_ssh: this.servers[name].by_ssh,
+                  ssh_host: this.servers[name].ssh_host,
+                  ssh_port: this.servers[name].ssh_port,
+                  ssh_user: this.servers[name].ssh_user,
+                  ssh_password: this.servers[name].ssh_password,
+                  db: this.searchForm.db,
+                  search: this.searchForm.search,
+              }
+              axios.get(url, {params: params}).then((response) => {
+                loading.close()
+                if (response.data.error) {
+                    ElementPlus.ElMessage.error(response.data.error)
+                } else {
+                    this.resultKeys = response.data.result_keys
+                    this.totalKeys = response.data.keys
+                    this.clearCurrentKeyDetail(true)
+                }
+              }).catch((err) => {
+                ElNotification({title: 'Error', message: err, type: 'error'})
+                loading.close()
+              })
+            },
+            handleNodeClick(data, node) {
+              const key = node.key
+              if (this.currentKey === key) {
+                  return
+              }
+              this.currentKey = key
+              if (this.totalKeys.indexOf(key) === -1) {
+                this.currentKey += '*'
+              }
+              this.fetchKeyData()
+            },
+            clearCurrentKeyDetail(clearKey) {
+              this.currentKeyType = ''
+              this.currentKeyTtl = ''
+              this.currentStringData = ''
+              this.currentListData = []
+              this.currentHashData = []
+              this.currentSetData = []
+              this.currentZsetData = []
+              if (clearKey) {
+                this.currentKey = ''
+              }
+            },
+            fetchKeyData() {
+
+              this.clearCurrentKeyDetail()
+
+              const key = this.currentKey
+              if (key.substr(key.length-1,1) === '*') {
+                  return
+              }
+
+              const url = `/get_key_detail`
+              const name = this.currentServer
+              const params = {
+                  host: this.servers[name].host,
+                  port: this.servers[name].port,
+                  password: this.servers[name].password,
+                  by_ssh: this.servers[name].by_ssh,
+                  ssh_host: this.servers[name].ssh_host,
+                  ssh_port: this.servers[name].ssh_port,
+                  ssh_user: this.servers[name].ssh_user,
+                  ssh_password: this.servers[name].ssh_password,
+                  db: this.searchForm.db,
+                  key: key,
+              }
+              const loading = ElementPlus.ElLoading.service({
+                lock: true,
+                text: 'Loading',
+                background: 'rgba(0, 0, 0, 0)',
+              })
+              axios.get(url, {params: params}).then((response) => {
+                loading.close()
+                if (response.data.error) {
+                    ElementPlus.ElMessage.error(response.data.error)
+                } else {
+                    this.currentKeyType = response.data.key_type
+                    this.currentKeyTtl = response.data.ttl
+                    this.currentStringData = response.data.string_data
+                    this.currentListData = response.data.list_data
+                    this.currentHashData = response.data.hash_data
+                    this.currentSetData = response.data.set_data
+                    this.currentZsetData = response.data.zset_data
+                }
+              }).catch((err) => {
+                ElNotification({title: 'Error', message: err, type: 'error'})
+                loading.close()
+              })
+            }
 
         },
 
